@@ -8,8 +8,13 @@ import {User} from './src/entity/User';
 
 require('dotenv').config();
 
-
-
+interface UserInterface {
+  userId?: number,
+  nickname: string,
+  password: string,
+  imgPath?: string,
+  refreshToken?: string
+}
 
 app.use([
   express.json(),
@@ -29,7 +34,7 @@ app.post('/signup',async( req:Request, res:Response, next:NextFunction)=>{
     user.password = hashPassword ;
     user.imgPath = imgPath ;
     
-    const result: object = await user.save(); // save 함수 자체가 느리다는 검색 결과가 있네요잉
+    const result: UserInterface = await user.save(); // save 함수 자체가 느리다는 검색 결과가 있네요잉
     // = const update = await User.save({firstName:firstName, lastName:lastName,isActive: true })
   
     res.send({msg:'회원가입 완료!',data:result})
@@ -45,7 +50,7 @@ app.post('/login',async( req:Request, res:Response, next:NextFunction)=>{
     const {email,password} = req.body;
     const user = new User();
   
-    const findOneResult: object | null  = await User.findOne({where:{ email:email }});
+    const findOneResult: UserInterface | null  = await User.findOne({where:{ email:email }});
     
     if(!findOneResult) throw new Error('No content');
     
@@ -69,11 +74,12 @@ app.post('/login',async( req:Request, res:Response, next:NextFunction)=>{
         expiresIn: '7h',
       });
 
-    const hashtoken:string = await bcrypt.hash(password,10);
+    // refreshToken 암호화 제거
+    // const hashtoken:string = await bcrypt.hash(password,10);
     
     const updateUser = await User.update(
       {userId:findOneResult['userId']},
-      { refreshToken: hashtoken}
+      { refreshToken: refreshToken}
     )
     
     if(!updateUser['affected']) throw new Error('refreshToken update error');
